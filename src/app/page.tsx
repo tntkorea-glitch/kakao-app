@@ -1,13 +1,82 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import ChatRoomList from "@/components/ChatRoomList";
 import MessageEditor from "@/components/MessageEditor";
 import SendControls from "@/components/SendControls";
 import LogViewer from "@/components/LogViewer";
 import { isElectron, getElectronAPI } from "@/lib/electron";
 
+interface UserInfo {
+  id: string;
+  email: string;
+  name: string;
+  serial?: string | null;
+  serialExpiresAt?: string | null;
+}
+
 export default function Dashboard() {
+  const router = useRouter();
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [serialInput, setSerialInput] = useState("");
+  const [serialStatus, setSerialStatus] = useState<{
+    valid: boolean;
+    daysLeft?: number;
+    reason?: string;
+  } | null>(null);
+  const [serialError, setSerialError] = useState("");
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // 로그인 체크
+  useEffect(() => {
+    const stored = localStorage.getItem("user");
+    if (!stored) {
+      router.push("/login");
+      return;
+    }
+    const u = JSON.parse(stored) as UserInfo;
+    setUser(u);
+    setAuthChecked(true);
+
+    // 시리얼 상태 확인
+    fetch("/api/serial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "check", userId: u.id }),
+    })
+      .then((r) => r.json())
+      .then((data) => setSerialStatus(data))
+      .catch(() => {});
+  }, [router]);
+
+  const handleActivateSerial = async () => {
+    if (!serialInput.trim() || !user) return;
+    setSerialError("");
+    const res = await fetch("/api/serial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "activate", userId: user.id, serialKey: serialInput.trim() }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      setSerialError(data.error);
+      return;
+    }
+    setSerialStatus({ valid: true, daysLeft: data.durationDays });
+    setSerialInput("");
+    // 사용자 정보 업데이트
+    const updated = { ...user, serial: data.serial, serialExpiresAt: data.expiresAt };
+    setUser(updated);
+    localStorage.setItem("user", JSON.stringify(updated));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    router.push("/login");
+  };
+
   // 상태
   const [rooms, setRooms] = useState<string[]>([]);
   const [message, setMessage] = useState("");
