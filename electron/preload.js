@@ -6,6 +6,8 @@
 
 const { contextBridge, ipcRenderer } = require('electron');
 
+console.log('[preload] electronAPI 브릿지 로딩 중...');
+
 contextBridge.exposeInMainWorld('electronAPI', {
   // ── 앱 정보 ──
   getAppInfo: () => ipcRenderer.invoke('app:info'),
