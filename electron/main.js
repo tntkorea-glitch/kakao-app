@@ -57,7 +57,7 @@ async function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      webSecurity: true,
+      webSecurity: false, // 원격 URL에서 preload 브릿지 허용
     },
   });
 
