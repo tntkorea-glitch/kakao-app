@@ -62,7 +62,7 @@ export default function Dashboard() {
   const [scheduleMinute, setScheduleMinute] = useState(0);
   const [delay, setDelay] = useState(2);
   const [isSending, setIsSending] = useState(false);
-  const [status, setStatus] = useState("대기 중");
+  const [sendStatus, setSendStatus] = useState("대기 중");
   const [logs, setLogs] = useState<string[]>([]);
 
   const stopRef = useRef(false);
