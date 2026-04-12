@@ -86,9 +86,8 @@ async function createWindow() {
   log(`Loading: ${SERVER_URL}`);
   mainWindow.loadURL(SERVER_URL);
 
-  if (isDev) {
-    mainWindow.webContents.openDevTools();
-  }
+  // DevTools는 Ctrl+Shift+I로 수동으로 열 수 있음
+  // if (isDev) mainWindow.webContents.openDevTools();
 }
 
 // ============================================================
