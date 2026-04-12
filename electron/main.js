@@ -25,7 +25,7 @@ remoteMain.initialize();
 // 설정
 // ============================================================
 const isDev = process.argv.includes('--dev');
-const DEV_URL = 'http://localhost:3000';
+const DEV_URL = 'http://localhost:3200';
 const PROD_URL = 'https://kakao-app.vercel.app'; // 배포 후 변경
 const SERVER_URL = isDev ? DEV_URL : PROD_URL;
 
