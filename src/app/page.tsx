@@ -310,7 +310,7 @@ export default function Dashboard() {
           isSending={isSending}
           onStart={handleStart}
           onStop={handleStop}
-          status={status}
+          status={sendStatus}
         />
       </div>
 
