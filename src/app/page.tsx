@@ -1,24 +1,18 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import ChatRoomList from "@/components/ChatRoomList";
 import MessageEditor from "@/components/MessageEditor";
 import SendControls from "@/components/SendControls";
 import LogViewer from "@/components/LogViewer";
 import { isElectron, getElectronAPI } from "@/lib/electron";
 
-interface UserInfo {
-  id: string;
-  email: string;
-  name: string;
-  serial?: string | null;
-  serialExpiresAt?: string | null;
-}
-
 export default function Dashboard() {
   const router = useRouter();
-  const [user, setUser] = useState<UserInfo | null>(null);
+  const { data: session, status } = useSession();
+
   const [serialInput, setSerialInput] = useState("");
   const [serialStatus, setSerialStatus] = useState<{
     valid: boolean;
@@ -26,29 +20,16 @@ export default function Dashboard() {
     reason?: string;
   } | null>(null);
   const [serialError, setSerialError] = useState("");
-  const [authChecked, setAuthChecked] = useState(false);
 
-  // 로그인 체크
-  useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (!stored) {
-      router.push("/login");
-      return;
-    }
-    const u = JSON.parse(stored) as UserInfo;
-    setUser(u);
-    setAuthChecked(true);
+  // 로그인 체크 — NextAuth 세션 기반
+  const authChecked = status !== "loading";
+  const user = session?.user
+    ? { id: (session.user as { id?: string }).id || "", email: session.user.email || "", name: session.user.name || "" }
+    : null;
 
-    // 시리얼 상태 확인
-    fetch("/api/serial", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "check", userId: u.id }),
-    })
-      .then((r) => r.json())
-      .then((data) => setSerialStatus(data))
-      .catch(() => {});
-  }, [router]);
+  if (authChecked && !user) {
+    router.push("/login");
+  }
 
   const handleActivateSerial = async () => {
     if (!serialInput.trim() || !user) return;
@@ -65,16 +46,10 @@ export default function Dashboard() {
     }
     setSerialStatus({ valid: true, daysLeft: data.durationDays });
     setSerialInput("");
-    // 사용자 정보 업데이트
-    const updated = { ...user, serial: data.serial, serialExpiresAt: data.expiresAt };
-    setUser(updated);
-    localStorage.setItem("user", JSON.stringify(updated));
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    router.push("/login");
+    signOut({ callbackUrl: "/login" });
   };
 
   // 상태
