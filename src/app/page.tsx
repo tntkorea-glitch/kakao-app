@@ -220,21 +220,85 @@ export default function Dashboard() {
     addLog("발송 중지됨");
   }, [addLog]);
 
+  if (!authChecked) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <span className="text-gray-400">로딩 중...</span>
+      </div>
+    );
+  }
+
+  // 시리얼 미인증 시 시리얼 입력 화면
+  if (serialStatus && !serialStatus.valid) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-gray-900 rounded-2xl p-8">
+          <h1 className="text-2xl font-bold text-center mb-2">시리얼 키 등록</h1>
+          <p className="text-gray-400 text-center text-sm mb-6">
+            프로그램을 사용하려면 시리얼 키를 등록해주세요
+          </p>
+          <p className="text-gray-500 text-xs text-center mb-4">
+            {user?.name}님 ({user?.email})
+          </p>
+
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={serialInput}
+              onChange={(e) => setSerialInput(e.target.value)}
+              placeholder="KS-XXXXXXXX-XXXXXXXX"
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-sm text-center tracking-wider focus:outline-none focus:border-blue-500"
+            />
+            {serialError && (
+              <div className="text-red-400 text-sm bg-red-900/20 px-3 py-2 rounded-lg">
+                {serialError}
+              </div>
+            )}
+            <button
+              onClick={handleActivateSerial}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-sm"
+            >
+              시리얼 키 등록
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full py-2 text-gray-500 hover:text-gray-300 text-sm"
+            >
+              로그아웃
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen p-4 gap-4 max-w-7xl mx-auto w-full">
       {/* 헤더 */}
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">카카오톡 자동 발송기</h1>
         <div className="flex items-center gap-3">
+          {serialStatus?.valid && (
+            <span className="text-xs px-2 py-1 bg-blue-900/50 text-blue-400 rounded">
+              D-{serialStatus.daysLeft}
+            </span>
+          )}
           {isElectron() ? (
             <span className="text-xs px-2 py-1 bg-green-900/50 text-green-400 rounded">
               데스크톱 연결됨
             </span>
           ) : (
             <span className="text-xs px-2 py-1 bg-yellow-900/50 text-yellow-400 rounded">
-              브라우저 모드 (발송 불가)
+              브라우저 모드
             </span>
           )}
+          <span className="text-xs text-gray-500">{user?.name}</span>
+          <button
+            onClick={handleLogout}
+            className="text-xs text-gray-500 hover:text-gray-300"
+          >
+            로그아웃
+          </button>
         </div>
       </header>
 
