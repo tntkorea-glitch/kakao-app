@@ -143,12 +143,12 @@ export default function Dashboard() {
     setIsSending(true);
 
     if (mode === "once") {
-      setStatus("발송 중...");
+      setSendStatus("발송 중...");
       await doSend();
       setIsSending(false);
-      setStatus("대기 중");
+      setSendStatus("대기 중");
     } else if (mode === "interval") {
-      setStatus(`반복 발송 중 (${interval}분 간격)`);
+      setSendStatus(`반복 발송 중 (${interval}분 간격)`);
       const run = async () => {
         if (stopRef.current) return;
         await doSend();
@@ -170,15 +170,15 @@ export default function Dashboard() {
       addLog(
         `예약 발송 설정: ${target.toLocaleString("ko-KR")} (${mins}분 후)`
       );
-      setStatus(`예약 대기 중 (${scheduleHour}:${String(scheduleMinute).padStart(2, "0")})`);
+      setSendStatus(`예약 대기 중 (${scheduleHour}:${String(scheduleMinute).padStart(2, "0")})`);
 
       timerRef.current = setTimeout(async () => {
         if (stopRef.current) return;
-        setStatus("예약 발송 중...");
+        setSendStatus("예약 발송 중...");
         addLog("예약 시간 도달 - 발송 시작");
         await doSend();
         setIsSending(false);
-        setStatus("대기 중");
+        setSendStatus("대기 중");
       }, delayMs);
     }
   }, [rooms, message, imagePath, mode, interval, scheduleHour, scheduleMinute, doSend, addLog]);
@@ -191,7 +191,7 @@ export default function Dashboard() {
       timerRef.current = null;
     }
     setIsSending(false);
-    setStatus("대기 중");
+    setSendStatus("대기 중");
     addLog("발송 중지됨");
   }, [addLog]);
 
