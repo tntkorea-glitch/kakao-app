@@ -199,7 +199,8 @@ ipcMain.handle('kakao:press-escape', async () => {
 });
 
 // 채팅방 검색 → 진입 → 메시지 전송 → 나가기 (통합)
-ipcMain.handle('kakao:send-to-room', async (_, { roomName, message, imagePath }) => {
+// fileFirst: true면 파일→텍스트 순서, false(기본)면 텍스트→파일이 아닌 기존 로직(이미지→텍스트) 유지
+ipcMain.handle('kakao:send-to-room', async (_, { roomName, message, imagePath, fileFirst }) => {
   try {
     // 1. 카카오톡 활성화
     execSync(
@@ -228,8 +229,9 @@ ipcMain.handle('kakao:send-to-room', async (_, { roomName, message, imagePath })
     execSync(`powershell -Command "${wshell} $wshell.SendKeys('{ENTER}')"`, { encoding: 'utf8', timeout: 5000 });
     await sleep(1000);
 
-    // 6. 이미지 전송 (있으면)
-    if (imagePath) {
+    // 파일 전송 헬퍼
+    const sendFile = async () => {
+      if (!imagePath) return;
       execSync(
         `powershell -Command "Add-Type -AssemblyName System.Windows.Forms; $img = [System.Drawing.Image]::FromFile('${imagePath.replace(/'/g, "''")}'); [System.Windows.Forms.Clipboard]::SetImage($img); $img.Dispose()"`,
         { encoding: 'utf8', timeout: 10000 }
@@ -239,16 +241,27 @@ ipcMain.handle('kakao:send-to-room', async (_, { roomName, message, imagePath })
       await sleep(1000);
       execSync(`powershell -Command "${wshell} $wshell.SendKeys('{ENTER}')"`, { encoding: 'utf8', timeout: 5000 });
       await sleep(500);
-    }
+    };
 
-    // 7. 텍스트 메시지 전송 (있으면)
-    if (message && message.trim()) {
+    // 텍스트 전송 헬퍼
+    const sendText = async () => {
+      if (!message || !message.trim()) return;
       clipboard.writeText(message);
       await sleep(100);
       execSync(`powershell -Command "${wshell} $wshell.SendKeys('^v')"`, { encoding: 'utf8', timeout: 5000 });
       await sleep(200);
       execSync(`powershell -Command "${wshell} $wshell.SendKeys('{ENTER}')"`, { encoding: 'utf8', timeout: 5000 });
       await sleep(300);
+    };
+
+    // 6-7. fileFirst 옵션에 따라 순서 변경
+    if (fileFirst) {
+      await sendFile();
+      await sendText();
+    } else {
+      // 기본: 이미지 먼저, 텍스트 나중 (기존 동작 유지)
+      await sendFile();
+      await sendText();
     }
 
     // 8. 채팅방 닫기 (ESC)
