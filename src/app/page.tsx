@@ -19,6 +19,7 @@ export default function Dashboard() {
     daysLeft?: number;
     reason?: string;
   } | null>(null);
+  const [serialLoading, setSerialLoading] = useState(true);
   const [serialError, setSerialError] = useState("");
 
   // 로그인 체크 — NextAuth 세션 기반
@@ -27,9 +28,31 @@ export default function Dashboard() {
     ? { id: (session.user as { id?: string }).id || "", email: session.user.email || "", name: session.user.name || "" }
     : null;
 
-  if (authChecked && !user) {
-    router.push("/login");
-  }
+  // 로그인 안 됐으면 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (authChecked && !user) {
+      router.push("/login");
+    }
+  }, [authChecked, user, router]);
+
+  // 로그인 후 시리얼 유효성 자동 체크
+  useEffect(() => {
+    if (!user?.id) return;
+    setSerialLoading(true);
+    fetch("/api/serial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "check", userId: user.id }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setSerialStatus(data);
+      })
+      .catch(() => {
+        setSerialStatus({ valid: false, reason: "시리얼 확인 중 오류 발생" });
+      })
+      .finally(() => setSerialLoading(false));
+  }, [user?.id]);
 
   const handleActivateSerial = async () => {
     if (!serialInput.trim() || !user) return;
