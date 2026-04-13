@@ -15,6 +15,7 @@ export interface KakaoAPI {
     roomName: string;
     message: string;
     imagePath?: string;
+    fileFirst?: boolean;
   }) => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -28,6 +29,8 @@ export interface ElectronAPI {
   getMachineId: () => Promise<string>;
   kakao: KakaoAPI;
   openFileDialog: () => Promise<string | null>;
+  openFolderDialog: () => Promise<string | null>;
+  listFolderImages: (folderPath: string) => Promise<string[]>;
 }
 
 declare global {
