@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     if (!email || !password || !name) {
       return NextResponse.json({ error: "모든 필드를 입력해주세요." }, { status: 400 });
     }
-    const result = signup(email, password, name);
+    const result = await signup(email, password, name);
     if ("error" in result) {
       return NextResponse.json(result, { status: 400 });
     }
