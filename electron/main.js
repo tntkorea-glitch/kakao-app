@@ -288,6 +288,29 @@ ipcMain.handle('dialog:open-file', async () => {
   return result.canceled ? null : result.filePaths[0];
 });
 
+// 폴더 선택 다이얼로그
+ipcMain.handle('dialog:open-folder', async () => {
+  const { dialog } = require('electron');
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory'],
+  });
+  return result.canceled ? null : result.filePaths[0];
+});
+
+// 폴더 내 이미지 목록
+ipcMain.handle('folder:list-images', async (_, folderPath) => {
+  try {
+    const files = fs.readdirSync(folderPath);
+    const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'];
+    return files
+      .filter((f) => imageExts.includes(path.extname(f).toLowerCase()))
+      .map((f) => path.join(folderPath, f))
+      .sort();
+  } catch {
+    return [];
+  }
+});
+
 // 앱 정보
 ipcMain.handle('app:info', async () => {
   return {
