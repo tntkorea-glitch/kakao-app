@@ -1,24 +1,12 @@
 /**
- * 간단한 파일 기반 인증 시스템
- * 개발/소규모 사용 - 나중에 DB로 전환 가능
+ * 인증 시스템
+ * 로컬: 파일 기반, Vercel: Upstash Redis (storage.ts 추상화)
  */
 
-import fs from "fs";
-import path from "path";
 import crypto from "crypto";
+import { storageGet, storageSet } from "./storage";
 
-const DATA_DIR = path.join(process.cwd(), ".data");
-const USERS_FILE = path.join(DATA_DIR, "users.json");
-const SERIALS_FILE = path.join(DATA_DIR, "serials.json");
-
-// 데이터 디렉토리 생성
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-}
-
-// ── 사용자 관련 ──
+// ── 타입 ──
 
 interface User {
   id: string;
@@ -30,6 +18,17 @@ interface User {
   serialExpiresAt?: string;
 }
 
+interface Serial {
+  key: string;
+  durationDays: number;
+  used: boolean;
+  usedBy?: string;
+  usedAt?: string;
+  createdAt: string;
+}
+
+// ── 유틸 ──
+
 function hashPassword(password: string): string {
   return crypto.createHash("sha256").update(password).digest("hex");
 }
@@ -39,23 +38,26 @@ function generateToken(userId: string): string {
   return Buffer.from(payload).toString("base64");
 }
 
-function loadUsers(): User[] {
-  ensureDataDir();
-  if (!fs.existsSync(USERS_FILE)) return [];
-  try {
-    return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
-  } catch {
-    return [];
-  }
+async function loadUsers(): Promise<User[]> {
+  return storageGet<User[]>("users", []);
 }
 
-function saveUsers(users: User[]) {
-  ensureDataDir();
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), "utf-8");
+async function saveUsers(users: User[]): Promise<void> {
+  return storageSet("users", users);
 }
 
-export function signup(email: string, password: string, name: string) {
-  const users = loadUsers();
+async function loadSerials(): Promise<Serial[]> {
+  return storageGet<Serial[]>("serials", []);
+}
+
+async function saveSerials(serials: Serial[]): Promise<void> {
+  return storageSet("serials", serials);
+}
+
+// ── 사용자 관련 ──
+
+export async function signup(email: string, password: string, name: string) {
+  const users = await loadUsers();
   if (users.find((u) => u.email === email)) {
     return { error: "이미 가입된 이메일입니다." };
   }
@@ -69,7 +71,7 @@ export function signup(email: string, password: string, name: string) {
   };
 
   users.push(user);
-  saveUsers(users);
+  await saveUsers(users);
 
   const token = generateToken(user.id);
   return {
@@ -78,8 +80,8 @@ export function signup(email: string, password: string, name: string) {
   };
 }
 
-export function login(email: string, password: string) {
-  const users = loadUsers();
+export async function login(email: string, password: string) {
+  const users = await loadUsers();
   const user = users.find(
     (u) => u.email === email && u.password === hashPassword(password)
   );
@@ -103,47 +105,23 @@ export function login(email: string, password: string) {
 
 // ── 시리얼 키 관련 ──
 
-interface Serial {
-  key: string;
-  durationDays: number;
-  used: boolean;
-  usedBy?: string;
-  usedAt?: string;
-  createdAt: string;
-}
-
-function loadSerials(): Serial[] {
-  ensureDataDir();
-  if (!fs.existsSync(SERIALS_FILE)) return [];
-  try {
-    return JSON.parse(fs.readFileSync(SERIALS_FILE, "utf-8"));
-  } catch {
-    return [];
-  }
-}
-
-function saveSerials(serials: Serial[]) {
-  ensureDataDir();
-  fs.writeFileSync(SERIALS_FILE, JSON.stringify(serials, null, 2), "utf-8");
-}
-
 /** 시리얼 키 생성 (관리자용) */
-export function generateSerialKey(durationDays: number = 365): string {
+export async function generateSerialKey(durationDays: number = 365): Promise<string> {
   const key = `KS-${crypto.randomBytes(4).toString("hex").toUpperCase()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
-  const serials = loadSerials();
+  const serials = await loadSerials();
   serials.push({
     key,
     durationDays,
     used: false,
     createdAt: new Date().toISOString(),
   });
-  saveSerials(serials);
+  await saveSerials(serials);
   return key;
 }
 
 /** 시리얼 키 인증 */
-export function activateSerial(userId: string, serialKey: string) {
-  const serials = loadSerials();
+export async function activateSerial(userId: string, serialKey: string) {
+  const serials = await loadSerials();
   const serial = serials.find((s) => s.key === serialKey);
 
   if (!serial) {
@@ -153,14 +131,12 @@ export function activateSerial(userId: string, serialKey: string) {
     return { error: "이미 사용된 시리얼 키입니다." };
   }
 
-  // 시리얼 사용 처리
   serial.used = true;
   serial.usedBy = userId;
   serial.usedAt = new Date().toISOString();
-  saveSerials(serials);
+  await saveSerials(serials);
 
-  // 사용자에 시리얼 연결
-  const users = loadUsers();
+  const users = await loadUsers();
   const user = users.find((u) => u.id === userId);
   if (!user) {
     return { error: "사용자를 찾을 수 없습니다." };
@@ -171,7 +147,7 @@ export function activateSerial(userId: string, serialKey: string) {
 
   user.serial = serialKey;
   user.serialExpiresAt = expiresAt.toISOString();
-  saveUsers(users);
+  await saveUsers(users);
 
   return {
     serial: serialKey,
@@ -181,8 +157,8 @@ export function activateSerial(userId: string, serialKey: string) {
 }
 
 /** 시리얼 유효성 확인 */
-export function checkSerial(userId: string) {
-  const users = loadUsers();
+export async function checkSerial(userId: string) {
+  const users = await loadUsers();
   const user = users.find((u) => u.id === userId);
 
   if (!user || !user.serial || !user.serialExpiresAt) {
