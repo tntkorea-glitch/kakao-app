@@ -259,9 +259,9 @@ ipcMain.handle('kakao:send-to-room', async (_, { roomName, message, imagePath, f
       await sendFile();
       await sendText();
     } else {
-      // 기본: 이미지 먼저, 텍스트 나중 (기존 동작 유지)
-      await sendFile();
+      // 기본: 텍스트 먼저, 파일 나중
       await sendText();
+      await sendFile();
     }
 
     // 8. 채팅방 닫기 (ESC)
