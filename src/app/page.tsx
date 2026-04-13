@@ -218,7 +218,7 @@ export default function Dashboard() {
     addLog("발송 중지됨");
   }, [addLog]);
 
-  if (!authChecked) {
+  if (!authChecked || !user || serialLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <span className="text-gray-400">로딩 중...</span>
@@ -227,7 +227,7 @@ export default function Dashboard() {
   }
 
   // 시리얼 미인증 시 시리얼 입력 화면
-  if (serialStatus && !serialStatus.valid) {
+  if (!serialStatus || !serialStatus.valid) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-gray-900 rounded-2xl p-8">
