@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === "generate") {
-    const key = generateSerialKey(durationDays || 365);
+    const key = await generateSerialKey(durationDays || 365);
     return NextResponse.json({ key });
   }
 
