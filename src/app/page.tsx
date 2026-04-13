@@ -233,7 +233,7 @@ export default function Dashboard() {
         <div className="w-full max-w-md bg-gray-900 rounded-2xl p-8">
           <h1 className="text-2xl font-bold text-center mb-2">시리얼 키 등록</h1>
           <p className="text-gray-400 text-center text-sm mb-6">
-            프로그램을 사용하려면 시리얼 키를 등록해주세요
+            {serialStatus?.reason || "프로그램을 사용하려면 시리얼 키를 등록해주세요"}
           </p>
           <p className="text-gray-500 text-xs text-center mb-4">
             {user?.name}님 ({user?.email})
