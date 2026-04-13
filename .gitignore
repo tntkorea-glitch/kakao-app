@@ -17,6 +17,7 @@ electron/node_modules
 # electron
 electron/out/
 electron/dist/
+electron/.next/
 
 # misc
 .DS_Store
