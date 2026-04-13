@@ -210,23 +210,23 @@ ipcMain.handle('kakao:send-to-room', async (_, { roomName, message, imagePath })
 
     const wshell = '$wshell = New-Object -ComObject WScript.Shell;';
 
-    // 2. 채팅탭 이동 (Ctrl+1 → Ctrl+2)
+    // 2. 채팅탭으로 이동
     execSync(`powershell -Command "${wshell} $wshell.SendKeys('^1'); Start-Sleep -Milliseconds 200; $wshell.SendKeys('^2')"`, { encoding: 'utf8', timeout: 5000 });
-    await sleep(300);
+    await sleep(500);
 
-    // 3. 검색 (Ctrl+F)
+    // 3. 채팅방 검색 열기 (Ctrl+F)
     execSync(`powershell -Command "${wshell} $wshell.SendKeys('^f')"`, { encoding: 'utf8', timeout: 5000 });
     await sleep(500);
 
-    // 4. 채팅방 이름 입력 (클립보드)
+    // 4. 검색창 초기화 + 채팅방 이름 입력
     clipboard.writeText(roomName);
     await sleep(100);
-    execSync(`powershell -Command "${wshell} $wshell.SendKeys('^a'); Start-Sleep -Milliseconds 100; $wshell.SendKeys('^v')"`, { encoding: 'utf8', timeout: 5000 });
-    await sleep(700);
+    execSync(`powershell -Command "${wshell} $wshell.SendKeys('^a'); Start-Sleep -Milliseconds 100; $wshell.SendKeys('{DELETE}'); Start-Sleep -Milliseconds 100; $wshell.SendKeys('^v')"`, { encoding: 'utf8', timeout: 5000 });
+    await sleep(1000);
 
-    // 5. Enter로 채팅방 진입
+    // 5. 첫 번째 결과로 진입 (Enter)
     execSync(`powershell -Command "${wshell} $wshell.SendKeys('{ENTER}')"`, { encoding: 'utf8', timeout: 5000 });
-    await sleep(800);
+    await sleep(1000);
 
     // 6. 이미지 전송 (있으면)
     if (imagePath) {
