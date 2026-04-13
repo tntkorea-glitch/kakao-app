@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     sendToRoom: (data) => ipcRenderer.invoke('kakao:send-to-room', data),
   },
 
-  // ── 파일 다이얼로그 ──
+  // ── 파일/폴더 다이얼로그 ──
   openFileDialog: () => ipcRenderer.invoke('dialog:open-file'),
+  openFolderDialog: () => ipcRenderer.invoke('dialog:open-folder'),
+  listFolderImages: (folderPath) => ipcRenderer.invoke('folder:list-images', folderPath),
 });
