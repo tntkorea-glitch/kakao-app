@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "사용자 ID가 필요합니다." }, { status: 400 });
     }
-    const result = checkSerial(userId);
+    const result = await checkSerial(userId);
     return NextResponse.json(result);
   }
 
