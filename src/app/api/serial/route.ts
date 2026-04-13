@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     if (!userId || !serialKey) {
       return NextResponse.json({ error: "사용자 ID와 시리얼 키를 입력해주세요." }, { status: 400 });
     }
-    const result = activateSerial(userId, serialKey);
+    const result = await activateSerial(userId, serialKey);
     if ("error" in result) {
       return NextResponse.json(result, { status: 400 });
     }
