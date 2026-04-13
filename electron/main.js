@@ -252,8 +252,9 @@ ipcMain.handle('kakao:send-to-room', async (_, { roomName, message, imagePath })
     }
 
     // 8. 채팅방 닫기 (ESC)
+    await sleep(500);
     execSync(`powershell -Command "${wshell} $wshell.SendKeys('{ESC}')"`, { encoding: 'utf8', timeout: 5000 });
-    await sleep(300);
+    await sleep(500);
 
     return { success: true };
   } catch (err) {
