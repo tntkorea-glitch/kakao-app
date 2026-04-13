@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (!email || !password) {
       return NextResponse.json({ error: "이메일과 비밀번호를 입력해주세요." }, { status: 400 });
     }
-    const result = login(email, password);
+    const result = await login(email, password);
     if ("error" in result) {
       return NextResponse.json(result, { status: 401 });
     }
