@@ -2,10 +2,9 @@ const { version } = require('./package.json');
 
 module.exports = {
   packagerConfig: {
-    icon: './icon.ico',
+    icon: './icon',
     asar: false,
-    productName: 'KakaoSender',
-    ignore: ['main-dev.js'],
+    name: 'kakao-sender',
   },
   rebuildConfig: {},
   makers: [
@@ -14,12 +13,10 @@ module.exports = {
       config: {
         setupIcon: './icon.ico',
         createDesktopShortcut: true,
-        name: 'KakaoSender',
-        exe: 'KakaoSender.exe',
+        name: 'kakao-sender',
         setupExe: `KakaoSender-Setup-${version}.exe`,
         noMsi: true,
         shortcutName: '카카오톡 자동 발송기',
-        productName: 'KakaoSender',
       },
     },
   ],
